@@ -1,8 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { NextResponse } from "next/server";
 
-export const runtime = "edge";
-
 type Region = "DOMESTIC" | "INTERNATIONAL";
 
 type EventRow = {
@@ -217,14 +215,14 @@ function validateEventInput(input: ReturnType<typeof normalizeEventInput>): stri
 	return null;
 }
 
-async function getDatabase() {
-	const { env } = await getCloudflareContext<CloudflareD1Env>();
+function getDatabase() {
+	const { env } = getCloudflareContext<CloudflareD1Env>();
 	return (env as CloudflareD1Env).timeline_db;
 }
 
 export async function GET() {
 	try {
-		const db = await getDatabase();
+		const db = getDatabase();
 		const { results } = await db.prepare("SELECT * FROM events ORDER BY sort_date ASC").all<EventRow>();
 
 		return NextResponse.json({
@@ -247,7 +245,7 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: validationError }, { status: 400 });
 		}
 
-		const db = await getDatabase();
+		const db = getDatabase();
 		const now = new Date().toISOString();
 
 		await db
